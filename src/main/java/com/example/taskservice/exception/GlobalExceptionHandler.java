@@ -3,6 +3,8 @@ package com.example.taskservice.exception;
 import com.example.taskservice.dto.ErrorResponse;
 import com.example.taskservice.dto.ValidationError;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,6 +19,9 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
 
     /**
      * Handles tasks that cannot be found in the task database.
@@ -25,6 +30,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex,
             HttpServletRequest request) {
+
+        logger.warn("Resource not found: {}", ex.getMessage());
 
         ErrorResponse response = new ErrorResponse();
 
@@ -52,6 +59,8 @@ public class GlobalExceptionHandler {
             UserNotFoundException ex,
             HttpServletRequest request) {
 
+        logger.warn("User validation failed: {}", ex.getMessage());
+
         ErrorResponse response = new ErrorResponse();
 
         response.setTimestamp(LocalDateTime.now());
@@ -76,6 +85,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserServiceUnavailableException(
             UserServiceUnavailableException ex,
             HttpServletRequest request) {
+
+        logger.error(
+                "User-service communication failure: {}",
+                ex.getMessage(),
+                ex
+        );
 
         ErrorResponse response = new ErrorResponse();
 
@@ -103,10 +118,21 @@ public class GlobalExceptionHandler {
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
+        logger.warn(
+                "Validation failed for request: {}",
+                request.getRequestURI()
+        );
+
         List<ValidationError> validationErrors = new ArrayList<>();
 
         for (FieldError fieldError :
                 ex.getBindingResult().getFieldErrors()) {
+
+            logger.debug(
+                    "Validation error - field: {}, message: {}",
+                    fieldError.getField(),
+                    fieldError.getDefaultMessage()
+            );
 
             validationErrors.add(
                     new ValidationError(
@@ -122,7 +148,9 @@ public class GlobalExceptionHandler {
         response.setTimestamp(LocalDateTime.now());
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setError("Validation Failed");
-        response.setMessage("One or more validation errors occurred.");
+        response.setMessage(
+                "One or more validation errors occurred."
+        );
         response.setPath(request.getRequestURI());
         response.setFieldErrors(validationErrors);
 
@@ -144,6 +172,11 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request) {
 
+        logger.error(
+                "Unhandled exception processing request {}",
+                request.getRequestURI(),
+                ex
+        );
 
         ErrorResponse response = new ErrorResponse();
 

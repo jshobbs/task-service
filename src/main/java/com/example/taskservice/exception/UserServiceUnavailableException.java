@@ -6,4 +6,8 @@ public class UserServiceUnavailableException extends RuntimeException {
         super(message);
     }
 
+    public UserServiceUnavailableException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

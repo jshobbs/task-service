@@ -33,14 +33,17 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponse createTask(TaskRequest taskRequest) {
 
-        logger.info("Validating user with id {}", taskRequest.getUserId());
+        logger.info("Creating task for user ID {}.",
+                taskRequest.getUserId());
+
+        logger.info("Validating user ID {} with user-service.",
+                taskRequest.getUserId());
 
         UserSummary user =
                 userServiceClient.getUserById(taskRequest.getUserId());
 
-        logger.info("User {} {} found",
-                user.getFirstName(),
-                user.getLastName());
+        logger.info("User ID {} validated successfully.",
+                user.getId());
 
         Task task = new Task();
 
@@ -49,9 +52,11 @@ public class TaskServiceImpl implements TaskService {
         task.setUserId(taskRequest.getUserId());
         task.setCompleted(false);
 
+        logger.debug("Saving new task to the database.");
+
         Task savedTask = taskRepository.save(task);
 
-        logger.info("Task {} created successfully",
+        logger.info("Task {} created successfully.",
                 savedTask.getId());
 
         return mapToResponse(savedTask);
@@ -60,23 +65,31 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskResponse> getAllTasks() {
 
-        logger.info("Retrieving all tasks");
+        logger.info("Retrieving all tasks.");
 
-        return taskRepository.findAll()
+        List<TaskResponse> tasks = taskRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        logger.info("Retrieved {} task(s).", tasks.size());
+
+        return tasks;
     }
 
     @Override
     public TaskResponse getTaskById(Long id) {
 
-        logger.info("Retrieving task {}", id);
+        logger.info("Retrieving task with ID {}.", id);
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task not found with id: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("Task with ID {} was not found.", id);
+                    return new ResourceNotFoundException(
+                            "Task not found with id: " + id);
+                });
+
+        logger.debug("Task with ID {} retrieved successfully.", id);
 
         return mapToResponse(task);
     }
@@ -85,14 +98,17 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateTask(Long id,
                                    TaskRequest taskRequest) {
 
-        logger.info("Updating task {}", id);
+        logger.info("Updating task with ID {}.", id);
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task not found with id: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("Task with ID {} was not found.", id);
+                    return new ResourceNotFoundException(
+                            "Task not found with id: " + id);
+                });
 
-        logger.info("Validating new user {}", taskRequest.getUserId());
+        logger.info("Validating user ID {} with user-service.",
+                taskRequest.getUserId());
 
         userServiceClient.getUserById(taskRequest.getUserId());
 
@@ -100,9 +116,11 @@ public class TaskServiceImpl implements TaskService {
         task.setDescription(taskRequest.getDescription());
         task.setUserId(taskRequest.getUserId());
 
+        logger.debug("Saving updated task with ID {}.", id);
+
         Task updatedTask = taskRepository.save(task);
 
-        logger.info("Task {} updated", id);
+        logger.info("Task {} updated successfully.", id);
 
         return mapToResponse(updatedTask);
     }
@@ -110,33 +128,46 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void deleteTask(Long id) {
 
-        logger.info("Deleting task {}", id);
+        logger.info("Deleting task with ID {}.", id);
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task not found with id: " + id));
+                .orElseThrow(() -> {
+                    logger.warn("Task with ID {} was not found.", id);
+                    return new ResourceNotFoundException(
+                            "Task not found with id: " + id);
+                });
+
+        logger.debug("Deleting task from the database.");
 
         taskRepository.delete(task);
 
-        logger.info("Task {} deleted", id);
+        logger.info("Task {} deleted successfully.", id);
     }
 
     @Override
     public List<TaskResponse> getTasksByUserId(Long userId) {
 
-        logger.info("Retrieving tasks for user {}", userId);
+        logger.info("Retrieving tasks for user ID {}.", userId);
 
-        return taskRepository.findByUserId(userId)
+        List<TaskResponse> tasks = taskRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        logger.info("Retrieved {} task(s) for user ID {}.",
+                tasks.size(),
+                userId);
+
+        return tasks;
     }
 
     /**
      * Converts a Task entity into a TaskResponse DTO.
      */
     private TaskResponse mapToResponse(Task task) {
+
+        logger.debug("Mapping Task entity with ID {} to TaskResponse DTO.",
+                task.getId());
 
         return new TaskResponse(
                 task.getId(),
