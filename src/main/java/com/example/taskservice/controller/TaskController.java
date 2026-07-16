@@ -3,6 +3,9 @@ package com.example.taskservice.controller;
 import com.example.taskservice.dto.TaskRequest;
 import com.example.taskservice.dto.TaskResponse;
 import com.example.taskservice.service.TaskService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Task Controller", description = "Operations for managing tasks")
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
@@ -25,7 +29,7 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-
+    @Operation(summary = "Check the health of the task service")
     @GetMapping("/health")
     public String health() {
 
@@ -34,7 +38,7 @@ public class TaskController {
         return "Task Service is running!";
     }
 
-
+    @Operation(summary = "Create a new task")
     @PostMapping
     public ResponseEntity<TaskResponse> createTask(
             @Valid @RequestBody TaskRequest taskRequest) {
@@ -57,7 +61,7 @@ public class TaskController {
                 HttpStatus.CREATED);
     }
 
-
+    @Operation(summary = "Get all tasks")
     @GetMapping
     public ResponseEntity<List<TaskResponse>> getAllTasks() {
 
@@ -75,6 +79,7 @@ public class TaskController {
     }
 
 
+    @Operation(summary = "Get a task by its ID")
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable Long id) {
@@ -96,6 +101,7 @@ public class TaskController {
     }
 
 
+    @Operation(summary = "Update a task by its ID")
     @PutMapping("/{id}")
     public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
@@ -118,6 +124,7 @@ public class TaskController {
     }
 
 
+    @Operation(summary = "Delete a task by its ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(
             @PathVariable Long id) {
@@ -138,6 +145,7 @@ public class TaskController {
     }
 
 
+    @Operation(summary = "Get tasks by user ID")
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<TaskResponse>> getTasksByUserId(
             @PathVariable Long userId) {
